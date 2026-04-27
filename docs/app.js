@@ -8,7 +8,10 @@
     tags: new Set(),
     duration: new Set(),
     difficulty: new Set(),
-    allergens: new Set()
+    fitnessGoals: new Set(),
+    macroFocus: new Set(),
+    allergens: new Set(),
+    mealPrep: false
   };
 
   const filterGroups = document.querySelector("#filterGroups");
@@ -42,8 +45,17 @@
     ["tags", "标签", "tag"],
     ["duration", "烹饪时长", "time"],
     ["difficulty", "难度", "difficulty"],
+    ["fitnessGoals", "健身目标", "fitness"],
+    ["macroFocus", "营养重点", "macro"],
     ["allergens", "忌口/过敏", "avoid"]
   ];
+
+  const fitnessPresets = {
+    cut: { fitnessGoals: ["减脂"], macroFocus: ["高蛋白"], mealPrep: false },
+    bulk: { fitnessGoals: ["增肌"], macroFocus: ["高碳水"], mealPrep: false },
+    recovery: { fitnessGoals: ["训练后"], macroFocus: ["高蛋白"], mealPrep: false },
+    prep: { fitnessGoals: [], macroFocus: [], mealPrep: true }
+  };
 
   const filterKeys = filterMeta.map(([key]) => key);
 
@@ -90,7 +102,7 @@
   }
 
   function getSelectedCount() {
-    return filterKeys.reduce((total, key) => total + state[key].size, 0);
+    return filterKeys.reduce((total, key) => total + state[key].size, 0) + (state.mealPrep ? 1 : 0);
   }
 
   function renderFilters() {
@@ -171,6 +183,8 @@
       ...(recipe.mealType || []),
       ...(recipe.tags || []),
       ...(recipe.nutritionTags || []),
+      ...(recipe.fitnessGoals || []),
+      ...(recipe.macroFocus || []),
       ...(recipe.mainIngredients || []),
       ...(recipe.ingredients || []),
       ...(recipe.steps || []),
@@ -190,6 +204,9 @@
       .filter((recipe) => matchesArray(recipe, "tags"))
       .filter((recipe) => matchesDuration(recipe))
       .filter((recipe) => matchesScalar(recipe, "difficulty"))
+      .filter((recipe) => matchesArray(recipe, "fitnessGoals"))
+      .filter((recipe) => matchesArray(recipe, "macroFocus"))
+      .filter((recipe) => !state.mealPrep || recipe.mealPrepFriendly)
       .filter(matchesKeyword);
   }
 
@@ -203,6 +220,9 @@
     if (state.keyword.trim()) {
       active.unshift(`关键词: ${state.keyword.trim()}`);
     }
+    if (state.mealPrep) {
+      active.push("备餐: 只看适合备餐");
+    }
     return active.length ? active.join(" · ") : "未选择筛选条件";
   }
 
@@ -215,7 +235,8 @@
   }
 
   function renderRecipeCard(recipe, index, compact) {
-    const tags = [recipe.category, recipe.difficulty, `${recipe.time} 分钟`].filter(Boolean);
+    const fitnessBadges = [...(recipe.fitnessGoals || []), ...(recipe.macroFocus || [])].slice(0, 2);
+    const tags = [recipe.category, ...fitnessBadges, `${recipe.time} 分钟`].filter(Boolean);
     const nutrition = recipe.nutrition || {};
     return `
       <article class="recipe-card ${compact ? "recipe-card-compact" : ""} ${getCardTone(index)}" data-id="${recipe.id}">
@@ -285,12 +306,77 @@
       <section class="nutrition-panel">
         <div>
           <h3>每份营养估算</h3>
-          <p>以下为静态估算值，仅用于日常选餐参考。</p>
+          <p>营养为每份估算，健身目标仅作日常选餐参考。</p>
         </div>
         <div class="nutrition-grid">
           ${items
             .map(([label, value, unit]) => `<span><strong>${escapeHtml(value ?? "-")}</strong>${escapeHtml(unit)}<small>${escapeHtml(label)}</small></span>`)
             .join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderGuideList(items) {
+    return `<ul>${(items || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+  }
+
+  function renderBeginnerGuide(recipe) {
+    const guide = recipe.beginnerGuide;
+    if (!guide) {
+      return "";
+    }
+
+    return `
+      <section id="beginnerGuidePanel" class="beginner-guide" hidden>
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Beginner Mode</p>
+            <h3>新手做饭指南</h3>
+          </div>
+          <span>火候 / 时间 / 状态判断</span>
+        </div>
+        <div class="guide-grid">
+          <section>
+            <h4>下锅前检查</h4>
+            ${renderGuideList(guide.prepChecklist)}
+          </section>
+          <section>
+            <h4>需要工具</h4>
+            ${renderGuideList(guide.toolChecklist)}
+          </section>
+        </div>
+        <ol class="guide-steps">
+          ${(guide.detailedSteps || [])
+            .map(
+              (item, index) => `
+                <li class="guide-step">
+                  <strong>${index + 1}. ${escapeHtml(item.title || "步骤")}</strong>
+                  <p>${escapeHtml(item.detail || "")}</p>
+                  <div class="guide-meta">
+                    <span>火候：${escapeHtml(item.heatLevel || "-")}</span>
+                    <span>时间：${escapeHtml(item.timeHint || "-")}</span>
+                    <span>状态：${escapeHtml(item.visualCue || "-")}</span>
+                  </div>
+                  <small>避免：${escapeHtml(item.mistakeToAvoid || "-")}</small>
+                </li>
+              `
+            )
+            .join("")}
+        </ol>
+        <div class="guide-lists">
+          <section>
+            <h4>熟没熟怎么看</h4>
+            <p>${escapeHtml(guide.donenessCheck || "")}</p>
+          </section>
+          <section>
+            <h4>常见错误</h4>
+            ${renderGuideList(guide.commonMistakes)}
+          </section>
+          <section>
+            <h4>补救办法</h4>
+            ${renderGuideList(guide.rescueTips)}
+          </section>
         </div>
       </section>
     `;
@@ -328,6 +414,12 @@
         <span>忌口：${escapeHtml((recipe.avoidIngredients || []).join(" / ") || "无")}</span>
       </div>
       ${renderNutrition(recipe)}
+      ${
+        recipe.beginnerGuide
+          ? `<div class="beginner-actions"><button class="primary-button" type="button" data-action="toggle-beginner" aria-expanded="false">新手模式</button><span>展开火候、时间、状态判断和失败补救。</span></div>`
+          : ""
+      }
+      ${renderBeginnerGuide(recipe)}
       <div class="dialog-columns">
         <section>
           <h3>食材</h3>
@@ -347,6 +439,7 @@
     state.keyword = "";
     keywordInput.value = "";
     filterKeys.forEach((key) => state[key].clear());
+    state.mealPrep = false;
     renderAll(true);
   }
 
@@ -366,6 +459,7 @@
       }
       raw.split(",").filter(Boolean).forEach((value) => state[key].add(value));
     });
+    state.mealPrep = params.get("prep") === "1";
   }
 
   function syncStateToUrl() {
@@ -378,6 +472,9 @@
         params.set(queryKey, encodeValues(state[key]));
       }
     });
+    if (state.mealPrep) {
+      params.set("prep", "1");
+    }
     const query = params.toString();
     const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
     window.history.replaceState(null, "", nextUrl);
@@ -450,6 +547,22 @@
     showRecipe(recipe);
   }
 
+  function applyFitnessPreset(name) {
+    const preset = fitnessPresets[name];
+    if (!preset) {
+      return;
+    }
+
+    state.keyword = "";
+    keywordInput.value = "";
+    filterKeys.forEach((key) => state[key].clear());
+    state.mealPrep = Boolean(preset.mealPrep);
+    (preset.fitnessGoals || []).forEach((value) => state.fitnessGoals.add(value));
+    (preset.macroFocus || []).forEach((value) => state.macroFocus.add(value));
+    renderAll(true);
+    recipeGrid.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   filterGroups.addEventListener("click", (event) => {
     const button = event.target.closest("[data-filter]");
     if (!button) {
@@ -475,12 +588,30 @@
       return;
     }
 
+    const presetButton = event.target.closest("[data-fitness-preset]");
+    if (presetButton) {
+      applyFitnessPreset(presetButton.dataset.fitnessPreset);
+      return;
+    }
+
     const actionButton = event.target.closest("[data-action]");
     if (!actionButton) {
       return;
     }
+    if (actionButton.dataset.action === "toggle-beginner") {
+      const panel = document.querySelector("#beginnerGuidePanel");
+      if (!panel) {
+        return;
+      }
+      const willOpen = panel.hidden;
+      panel.hidden = !willOpen;
+      actionButton.textContent = willOpen ? "收起新手模式" : "新手模式";
+      actionButton.setAttribute("aria-expanded", String(willOpen));
+      return;
+    }
     if (actionButton.dataset.action === "random") {
       showRandomRecipe();
+      return;
     }
     if (actionButton.dataset.action === "share") {
       copyShareLink();

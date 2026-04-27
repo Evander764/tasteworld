@@ -265,7 +265,8 @@ button {
   margin-top: 14px;
 }
 
-.featured {
+.featured,
+.fitness-zone {
   margin-top: 24px;
 }
 
@@ -289,6 +290,46 @@ button {
 
 .featured-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fitness-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fitness-card {
+  display: grid;
+  gap: 10px;
+  min-height: 154px;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, rgba(47, 111, 85, 0.12), transparent 52%),
+    var(--surface-strong);
+  color: var(--ink);
+  padding: 16px;
+  text-align: left;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.fitness-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(32, 36, 31, 0.13);
+}
+
+.fitness-card strong {
+  font-size: 20px;
+}
+
+.fitness-card span {
+  color: #424941;
+  line-height: 1.55;
+}
+
+.fitness-card small {
+  align-self: end;
+  color: var(--accent-strong);
+  font-weight: 900;
 }
 
 .recipe-grid {
@@ -518,6 +559,98 @@ button {
   color: var(--muted);
 }
 
+.beginner-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 30px 0;
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  padding: 14px;
+}
+
+.beginner-actions span {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.beginner-guide {
+  margin: 18px 30px 0;
+  border: 1px solid var(--line);
+  background: #fffaf0;
+  padding: 18px;
+}
+
+.beginner-guide h4,
+.beginner-guide p,
+.beginner-guide ul,
+.guide-steps {
+  margin: 0;
+}
+
+.guide-grid,
+.guide-lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.guide-grid section,
+.guide-lists section,
+.guide-step {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 14px;
+}
+
+.beginner-guide ul {
+  padding-left: 20px;
+  margin-top: 8px;
+}
+
+.guide-steps {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin-top: 14px;
+  list-style: none;
+}
+
+.guide-step {
+  display: grid;
+  gap: 8px;
+  line-height: 1.65;
+}
+
+.guide-step strong {
+  font-size: 18px;
+}
+
+.guide-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.guide-meta span {
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  padding: 6px 8px;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.guide-step small {
+  color: var(--muted);
+}
+
+.guide-lists {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 14px;
+  line-height: 1.65;
+}
+
 .dialog-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -569,7 +702,8 @@ button {
   }
 
   .featured-grid,
-  .recipe-grid {
+  .recipe-grid,
+  .fitness-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -685,7 +819,8 @@ button {
   }
 
   .featured-grid,
-  .recipe-grid {
+  .recipe-grid,
+  .fitness-grid {
     grid-template-columns: 1fr;
   }
 
@@ -773,6 +908,8 @@ button {
   .dialog-columns,
   .dialog-meta,
   .nutrition-panel,
+  .beginner-actions,
+  .beginner-guide,
   .dialog-tip {
     margin-left: 0;
     margin-right: 0;
@@ -781,6 +918,21 @@ button {
   .dialog-layout > div:last-child,
   .dialog-columns {
     padding: 22px;
+  }
+
+  .beginner-actions {
+    display: grid;
+    margin-top: 22px;
+  }
+
+  .beginner-guide {
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .guide-grid,
+  .guide-lists {
+    grid-template-columns: 1fr;
   }
 
   .dialog-meta {

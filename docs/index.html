@@ -30,11 +30,11 @@
 
         <section class="results" aria-label="菜谱结果">
           <header class="hero">
-            <p class="eyebrow">TasteWorld v0.2</p>
+            <p class="eyebrow">TasteWorld v0.4</p>
             <div class="hero-title-row">
               <div>
                 <h2>今天吃什么？</h2>
-                <p>60 道家常与轻食菜谱，按时间、场景、忌口筛一筛。</p>
+                <p>84 道家常、轻食与健身餐，按目标、营养、时间和忌口筛一筛。</p>
               </div>
               <div class="result-count">
                 <strong id="resultCount">0</strong>
@@ -62,6 +62,38 @@
               <span>快手 / 清淡 / 高蛋白</span>
             </div>
             <div id="featuredRecipes" class="featured-grid"></div>
+          </section>
+
+          <section class="fitness-zone" aria-label="健身餐专题">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Fitness Meals</p>
+                <h3>健身餐专题</h3>
+              </div>
+              <span>减脂 / 增肌 / 训练后 / 备餐</span>
+            </div>
+            <div class="fitness-grid">
+              <button class="fitness-card" type="button" data-fitness-preset="cut">
+                <strong>减脂高蛋白</strong>
+                <span>优先看热量更稳、蛋白更够的日常餐。</span>
+                <small>fitness=减脂 · macro=高蛋白</small>
+              </button>
+              <button class="fitness-card" type="button" data-fitness-preset="bulk">
+                <strong>增肌补能</strong>
+                <span>适合需要碳水和蛋白一起补上的正餐。</span>
+                <small>fitness=增肌 · macro=高碳水</small>
+              </button>
+              <button class="fitness-card" type="button" data-fitness-preset="recovery">
+                <strong>训练后恢复</strong>
+                <span>训练后优先补蛋白，兼顾饱腹和恢复。</span>
+                <small>fitness=训练后 · macro=高蛋白</small>
+              </button>
+              <button class="fitness-card" type="button" data-fitness-preset="prep">
+                <strong>可备餐便当</strong>
+                <span>适合提前做好，第二天带饭或复热。</span>
+                <small>prep=1</small>
+              </button>
+            </div>
           </section>
 
           <div class="status-bar">
