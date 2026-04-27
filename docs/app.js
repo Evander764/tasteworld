@@ -1,5 +1,7 @@
 (function () {
   const recipes = Array.isArray(window.RECIPES) ? window.RECIPES : [];
+  const initialVisibleCount = 12;
+  const loadMoreCount = 12;
   const state = {
     keyword: "",
     category: new Set(),
@@ -11,7 +13,8 @@
     fitnessGoals: new Set(),
     macroFocus: new Set(),
     allergens: new Set(),
-    mealPrep: false
+    mealPrep: false,
+    visibleCount: initialVisibleCount
   };
 
   const filterGroups = document.querySelector("#filterGroups");
@@ -22,6 +25,9 @@
   const activeCountText = document.querySelector("#activeCountText");
   const activeCountBadge = document.querySelector("#activeCountBadge");
   const emptyState = document.querySelector("#emptyState");
+  const loadMoreBar = document.querySelector("#loadMoreBar");
+  const visibleCountText = document.querySelector("#visibleCountText");
+  const loadMoreButton = document.querySelector("#loadMoreButton");
   const keywordInput = document.querySelector("#keywordInput");
   const dialog = document.querySelector("#recipeDialog");
   const dialogContent = document.querySelector("#dialogContent");
@@ -283,13 +289,19 @@
 
   function renderRecipes() {
     const filtered = getFilteredRecipes();
+    const visibleRecipes = filtered.slice(0, state.visibleCount);
     const selectedCount = getSelectedCount();
     resultCount.textContent = filtered.length;
     activeSummary.textContent = getActiveSummary();
     activeCountText.textContent = `已选 ${selectedCount} 项`;
     activeCountBadge.textContent = selectedCount;
     emptyState.hidden = filtered.length !== 0;
-    recipeGrid.innerHTML = filtered.map((recipe, index) => renderRecipeCard(recipe, index, false)).join("");
+    recipeGrid.innerHTML = visibleRecipes.map((recipe, index) => renderRecipeCard(recipe, index, false)).join("");
+
+    const hasMore = visibleRecipes.length < filtered.length;
+    loadMoreBar.hidden = filtered.length === 0;
+    visibleCountText.textContent = `已显示 ${visibleRecipes.length} / ${filtered.length} 道`;
+    loadMoreButton.hidden = !hasMore;
   }
 
   function renderNutrition(recipe) {
@@ -440,6 +452,7 @@
     keywordInput.value = "";
     filterKeys.forEach((key) => state[key].clear());
     state.mealPrep = false;
+    state.visibleCount = initialVisibleCount;
     renderAll(true);
   }
 
@@ -460,6 +473,7 @@
       raw.split(",").filter(Boolean).forEach((value) => state[key].add(value));
     });
     state.mealPrep = params.get("prep") === "1";
+    state.visibleCount = initialVisibleCount;
   }
 
   function syncStateToUrl() {
@@ -559,6 +573,7 @@
     state.mealPrep = Boolean(preset.mealPrep);
     (preset.fitnessGoals || []).forEach((value) => state.fitnessGoals.add(value));
     (preset.macroFocus || []).forEach((value) => state.macroFocus.add(value));
+    state.visibleCount = initialVisibleCount;
     renderAll(true);
     recipeGrid.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -575,6 +590,7 @@
     } else {
       state[key].add(value);
     }
+    state.visibleCount = initialVisibleCount;
     renderAll(true);
   });
 
@@ -613,6 +629,11 @@
       showRandomRecipe();
       return;
     }
+    if (actionButton.dataset.action === "load-more") {
+      state.visibleCount += loadMoreCount;
+      renderRecipes();
+      return;
+    }
     if (actionButton.dataset.action === "share") {
       copyShareLink();
     }
@@ -620,6 +641,7 @@
 
   keywordInput.addEventListener("input", (event) => {
     state.keyword = event.target.value;
+    state.visibleCount = initialVisibleCount;
     renderAll(true);
   });
 

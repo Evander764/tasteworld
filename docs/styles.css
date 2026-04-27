@@ -449,6 +449,30 @@ button {
   font-size: 22px;
 }
 
+.load-more-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 22px;
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  padding: 16px;
+  color: var(--muted);
+}
+
+.load-more-bar[hidden] {
+  display: none;
+}
+
+.load-more-bar span {
+  font-weight: 900;
+}
+
+.load-more-bar button[hidden] {
+  display: none;
+}
+
 .recipe-dialog {
   width: min(960px, calc(100vw - 28px));
   max-height: min(900px, calc(100vh - 28px));
@@ -847,6 +871,12 @@ button {
 
   .recipe-card p {
     font-size: 14px;
+  }
+
+  .load-more-bar {
+    display: grid;
+    gap: 10px;
+    text-align: center;
   }
 
   .mobile-bar {
