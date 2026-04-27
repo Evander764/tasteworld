@@ -381,6 +381,21 @@ button {
   margin-top: 18px;
 }
 
+.dialog-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 22px 30px 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.dialog-meta span {
+  border: 1px solid var(--line);
+  background: #f7f3ea;
+  padding: 8px 10px;
+}
+
 .dialog-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -395,6 +410,14 @@ button {
 .dialog-columns li {
   margin-bottom: 9px;
   line-height: 1.6;
+}
+
+.dialog-tip {
+  margin: -10px 30px 30px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  color: #424941;
+  line-height: 1.7;
 }
 
 @media (max-width: 1100px) {

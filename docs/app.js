@@ -1,10 +1,11 @@
 (function () {
-  const data = window.SHISHI_DATA;
+  const recipes = Array.isArray(window.RECIPES) ? window.RECIPES : [];
   const state = {
     keyword: "",
+    category: new Set(),
     cuisine: new Set(),
-    flavor: new Set(),
-    scene: new Set(),
+    mealType: new Set(),
+    tags: new Set(),
     duration: new Set(),
     difficulty: new Set(),
     allergens: new Set()
@@ -19,10 +20,18 @@
   const dialog = document.querySelector("#recipeDialog");
   const dialogContent = document.querySelector("#dialogContent");
 
+  const durationBuckets = [
+    { label: "15 分钟内", match: (recipe) => recipe.time <= 15 },
+    { label: "30 分钟内", match: (recipe) => recipe.time <= 30 },
+    { label: "1 小时内", match: (recipe) => recipe.time <= 60 },
+    { label: "慢炖慢煮", match: (recipe) => recipe.time > 60 }
+  ];
+
   const filterMeta = [
+    ["category", "分类"],
     ["cuisine", "菜系"],
-    ["flavor", "口味"],
-    ["scene", "场景"],
+    ["mealType", "餐次"],
+    ["tags", "标签"],
     ["duration", "烹饪时长"],
     ["difficulty", "难度"],
     ["allergens", "忌口/过敏"]
@@ -37,10 +46,43 @@
       .replace(/'/g, "&#039;");
   }
 
+  function uniqueValues(key) {
+    return Array.from(
+      new Set(
+        recipes.flatMap((recipe) => {
+          const value = recipe[key];
+          return Array.isArray(value) ? value : [value].filter(Boolean);
+        })
+      )
+    ).sort((a, b) => String(a).localeCompare(String(b), "zh-CN"));
+  }
+
+  function getAllergenValues() {
+    const values = new Set();
+    recipes.forEach((recipe) => {
+      [...(recipe.allergens || []), ...(recipe.avoidIngredients || [])].forEach((item) => {
+        if (item) {
+          values.add(item);
+        }
+      });
+    });
+    return Array.from(values).sort((a, b) => String(a).localeCompare(String(b), "zh-CN"));
+  }
+
+  function getFilterValues(key) {
+    if (key === "duration") {
+      return durationBuckets.map((bucket) => bucket.label);
+    }
+    if (key === "allergens") {
+      return getAllergenValues();
+    }
+    return uniqueValues(key);
+  }
+
   function renderFilters() {
     filterGroups.innerHTML = filterMeta
       .map(([key, title]) => {
-        const chips = data.filters[key]
+        const chips = getFilterValues(key)
           .map((item) => {
             const active = state[key].has(item) ? " is-active" : "";
             return `<button class="chip${active}" type="button" data-filter="${key}" data-value="${escapeHtml(item)}">${escapeHtml(item)}</button>`;
@@ -57,18 +99,44 @@
       .join("");
   }
 
-  function hasAllSelected(recipe, key) {
+  function matchesScalar(recipe, key) {
     if (!state[key].size) {
       return true;
     }
     return state[key].has(recipe[key]);
   }
 
+  function matchesArray(recipe, key) {
+    if (!state[key].size) {
+      return true;
+    }
+    const values = recipe[key] || [];
+    return Array.from(state[key]).every((item) => values.includes(item));
+  }
+
+  function matchesDuration(recipe) {
+    if (!state.duration.size) {
+      return true;
+    }
+    return Array.from(state.duration).every((label) => {
+      const bucket = durationBuckets.find((item) => item.label === label);
+      return bucket ? bucket.match(recipe) : true;
+    });
+  }
+
   function hasBlockedAllergen(recipe) {
     if (!state.allergens.size) {
       return false;
     }
-    return recipe.allergens.some((item) => state.allergens.has(item));
+
+    const searchable = [
+      ...(recipe.allergens || []),
+      ...(recipe.avoidIngredients || []),
+      ...(recipe.mainIngredients || []),
+      ...(recipe.ingredients || [])
+    ].join(" ");
+
+    return Array.from(state.allergens).some((blocked) => searchable.includes(blocked));
   }
 
   function matchesKeyword(recipe) {
@@ -78,13 +146,19 @@
     }
 
     return [
-      recipe.title,
-      recipe.summary,
+      recipe.name,
+      recipe.description,
+      recipe.category,
       recipe.cuisine,
-      recipe.flavor,
-      recipe.scene,
-      recipe.ingredients.join(" "),
-      recipe.steps.join(" ")
+      recipe.difficulty,
+      recipe.cost,
+      recipe.tips,
+      ...(recipe.mealType || []),
+      ...(recipe.tags || []),
+      ...(recipe.mainIngredients || []),
+      ...(recipe.ingredients || []),
+      ...(recipe.steps || []),
+      ...(recipe.tools || [])
     ]
       .join(" ")
       .toLowerCase()
@@ -92,13 +166,14 @@
   }
 
   function getFilteredRecipes() {
-    return data.recipes
+    return recipes
       .filter((recipe) => !hasBlockedAllergen(recipe))
-      .filter((recipe) => hasAllSelected(recipe, "cuisine"))
-      .filter((recipe) => hasAllSelected(recipe, "flavor"))
-      .filter((recipe) => hasAllSelected(recipe, "scene"))
-      .filter((recipe) => hasAllSelected(recipe, "duration"))
-      .filter((recipe) => hasAllSelected(recipe, "difficulty"))
+      .filter((recipe) => matchesScalar(recipe, "category"))
+      .filter((recipe) => matchesScalar(recipe, "cuisine"))
+      .filter((recipe) => matchesArray(recipe, "mealType"))
+      .filter((recipe) => matchesArray(recipe, "tags"))
+      .filter((recipe) => matchesDuration(recipe))
+      .filter((recipe) => matchesScalar(recipe, "difficulty"))
       .filter(matchesKeyword);
   }
 
@@ -119,33 +194,35 @@
     return ["tone-green", "tone-red", "tone-blue", "tone-gold", "tone-ink"][index % 5];
   }
 
-  function renderRecipes() {
-    const recipes = getFilteredRecipes();
-    resultCount.textContent = recipes.length;
-    activeSummary.textContent = getActiveSummary();
-    emptyState.hidden = recipes.length !== 0;
+  function getAllergenText(recipe) {
+    return recipe.allergens && recipe.allergens.length ? recipe.allergens.join(" / ") : "无常见过敏源";
+  }
 
-    recipeGrid.innerHTML = recipes
+  function renderRecipes() {
+    const filtered = getFilteredRecipes();
+    resultCount.textContent = filtered.length;
+    activeSummary.textContent = getActiveSummary();
+    emptyState.hidden = filtered.length !== 0;
+
+    recipeGrid.innerHTML = filtered
       .map((recipe, index) => {
-        const allergenText = recipe.allergens.length ? recipe.allergens.join(" / ") : "无常见忌口标签";
+        const tags = [recipe.category, recipe.difficulty, `${recipe.time} 分钟`].filter(Boolean);
         return `
           <article class="recipe-card ${getCardTone(index)}" data-id="${recipe.id}">
             <div class="recipe-visual" aria-hidden="true">
-              <span>${escapeHtml(recipe.title.slice(0, 1))}</span>
+              <span>${escapeHtml(recipe.emoji || recipe.name.slice(0, 1))}</span>
             </div>
             <div class="recipe-body">
               <div class="recipe-topline">
                 <span>${escapeHtml(recipe.cuisine)}</span>
-                <span>${escapeHtml(recipe.duration)}</span>
+                <span>${escapeHtml((recipe.mealType || []).join(" / "))}</span>
               </div>
-              <h3>${escapeHtml(recipe.title)}</h3>
-              <p>${escapeHtml(recipe.summary)}</p>
+              <h3>${escapeHtml(recipe.name)}</h3>
+              <p>${escapeHtml(recipe.description)}</p>
               <div class="recipe-tags">
-                <span>${escapeHtml(recipe.flavor)}</span>
-                <span>${escapeHtml(recipe.scene)}</span>
-                <span>${escapeHtml(recipe.difficulty)}</span>
+                ${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}
               </div>
-              <small>${escapeHtml(allergenText)}</small>
+              <small>${escapeHtml(getAllergenText(recipe))}</small>
             </div>
           </article>
         `;
@@ -154,32 +231,45 @@
   }
 
   function showRecipe(recipe) {
+    const meta = [
+      `${recipe.time} 分钟`,
+      recipe.difficulty,
+      `${recipe.servings} 人份`,
+      `${recipe.cost}成本`,
+      `辣度 ${recipe.spiceLevel}`
+    ];
+
     dialogContent.innerHTML = `
       <div class="dialog-layout">
-        <div class="dialog-visual ${getCardTone(data.recipes.indexOf(recipe))}">
-          <span>${escapeHtml(recipe.title.slice(0, 1))}</span>
+        <div class="dialog-visual ${getCardTone(recipes.indexOf(recipe))}">
+          <span>${escapeHtml(recipe.emoji || recipe.name.slice(0, 1))}</span>
         </div>
         <div>
-          <p class="eyebrow">${escapeHtml(recipe.cuisine)} · ${escapeHtml(recipe.duration)}</p>
-          <h2 id="dialogTitle">${escapeHtml(recipe.title)}</h2>
-          <p class="dialog-summary">${escapeHtml(recipe.summary)}</p>
+          <p class="eyebrow">${escapeHtml(recipe.cuisine)} · ${escapeHtml(recipe.category)}</p>
+          <h2 id="dialogTitle">${escapeHtml(recipe.name)}</h2>
+          <p class="dialog-summary">${escapeHtml(recipe.description)}</p>
           <div class="recipe-tags dialog-tags">
-            <span>${escapeHtml(recipe.flavor)}</span>
-            <span>${escapeHtml(recipe.scene)}</span>
-            <span>${escapeHtml(recipe.difficulty)}</span>
+            ${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
           </div>
         </div>
+      </div>
+      <div class="dialog-meta">
+        <span>餐次：${escapeHtml((recipe.mealType || []).join(" / "))}</span>
+        <span>工具：${escapeHtml((recipe.tools || []).join(" / "))}</span>
+        <span>主要食材：${escapeHtml((recipe.mainIngredients || []).join(" / "))}</span>
+        <span>忌口：${escapeHtml((recipe.avoidIngredients || []).join(" / ") || "无")}</span>
       </div>
       <div class="dialog-columns">
         <section>
           <h3>食材</h3>
-          <ul>${recipe.ingredients.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+          <ul>${(recipe.ingredients || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
         </section>
         <section>
           <h3>步骤</h3>
-          <ol>${recipe.steps.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ol>
+          <ol>${(recipe.steps || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ol>
         </section>
       </div>
+      <p class="dialog-tip"><strong>小贴士：</strong>${escapeHtml(recipe.tips || "暂无")}</p>
     `;
     dialog.showModal();
   }
@@ -213,7 +303,7 @@
     if (!card) {
       return;
     }
-    const recipe = data.recipes.find((item) => item.id === card.dataset.id);
+    const recipe = recipes.find((item) => item.id === card.dataset.id);
     if (recipe) {
       showRecipe(recipe);
     }
@@ -227,11 +317,11 @@
   document.querySelector("#clearButton").addEventListener("click", clearFilters);
 
   document.querySelector("#randomButton").addEventListener("click", () => {
-    const recipes = getFilteredRecipes();
-    if (!recipes.length) {
+    const filtered = getFilteredRecipes();
+    if (!filtered.length) {
       return;
     }
-    const recipe = recipes[Math.floor(Math.random() * recipes.length)];
+    const recipe = filtered[Math.floor(Math.random() * filtered.length)];
     showRecipe(recipe);
   });
 
