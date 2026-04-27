@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>食世界 - 今天吃什么</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="workspace" aria-label="食世界菜谱筛选器">
+        <aside class="filters" aria-label="筛选条件">
+          <div class="brand">
+            <span class="brand-mark">食</span>
+            <div>
+              <h1>食世界</h1>
+              <p>今天吃什么，先缩小选择。</p>
+            </div>
+          </div>
+
+          <label class="search-box">
+            <span>关键词</span>
+            <input id="keywordInput" type="search" placeholder="搜菜名、食材、做法" autocomplete="off" />
+          </label>
+
+          <div id="filterGroups" class="filter-groups"></div>
+
+          <div class="filter-actions">
+            <button id="randomButton" class="primary-button" type="button">随机一道</button>
+            <button id="clearButton" class="ghost-button" type="button">清空筛选</button>
+          </div>
+        </aside>
+
+        <section class="results" aria-label="菜谱结果">
+          <header class="results-header">
+            <div>
+              <p class="eyebrow">Recipe Finder</p>
+              <h2>今天的候选菜单</h2>
+            </div>
+            <div class="result-count">
+              <strong id="resultCount">0</strong>
+              <span>道菜</span>
+            </div>
+          </header>
+
+          <div class="status-bar">
+            <span id="activeSummary">未选择筛选条件</span>
+            <span>忌口标签会强制排除冲突菜谱</span>
+          </div>
+
+          <div id="recipeGrid" class="recipe-grid"></div>
+          <div id="emptyState" class="empty-state" hidden>
+            <strong>没有匹配结果</strong>
+            <span>试试减少筛选条件，或者清空忌口标签后再看一遍。</span>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="recipeDialog" class="recipe-dialog" aria-labelledby="dialogTitle">
+      <button id="closeDialog" class="close-button" type="button" aria-label="关闭详情">×</button>
+      <div id="dialogContent"></div>
+    </dialog>
+
+    <script src="./recipes.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
