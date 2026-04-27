@@ -13,12 +13,20 @@
 
   const filterGroups = document.querySelector("#filterGroups");
   const recipeGrid = document.querySelector("#recipeGrid");
+  const featuredRecipes = document.querySelector("#featuredRecipes");
   const resultCount = document.querySelector("#resultCount");
   const activeSummary = document.querySelector("#activeSummary");
+  const activeCountText = document.querySelector("#activeCountText");
+  const activeCountBadge = document.querySelector("#activeCountBadge");
   const emptyState = document.querySelector("#emptyState");
   const keywordInput = document.querySelector("#keywordInput");
   const dialog = document.querySelector("#recipeDialog");
   const dialogContent = document.querySelector("#dialogContent");
+  const filterPanel = document.querySelector("#filterPanel");
+  const filterBackdrop = document.querySelector("#filterBackdrop");
+  const openFiltersButton = document.querySelector("#openFiltersButton");
+  const closeFiltersButton = document.querySelector("#closeFiltersButton");
+  const toast = document.querySelector("#toast");
 
   const durationBuckets = [
     { label: "15 分钟内", match: (recipe) => recipe.time <= 15 },
@@ -28,14 +36,16 @@
   ];
 
   const filterMeta = [
-    ["category", "分类"],
-    ["cuisine", "菜系"],
-    ["mealType", "餐次"],
-    ["tags", "标签"],
-    ["duration", "烹饪时长"],
-    ["difficulty", "难度"],
-    ["allergens", "忌口/过敏"]
+    ["category", "分类", "category"],
+    ["cuisine", "菜系", "cuisine"],
+    ["mealType", "餐次", "meal"],
+    ["tags", "标签", "tag"],
+    ["duration", "烹饪时长", "time"],
+    ["difficulty", "难度", "difficulty"],
+    ["allergens", "忌口/过敏", "avoid"]
   ];
+
+  const filterKeys = filterMeta.map(([key]) => key);
 
   function escapeHtml(value) {
     return String(value)
@@ -79,6 +89,10 @@
     return uniqueValues(key);
   }
 
+  function getSelectedCount() {
+    return filterKeys.reduce((total, key) => total + state[key].size, 0);
+  }
+
   function renderFilters() {
     filterGroups.innerHTML = filterMeta
       .map(([key, title]) => {
@@ -118,7 +132,7 @@
     if (!state.duration.size) {
       return true;
     }
-    return Array.from(state.duration).every((label) => {
+    return Array.from(state.duration).some((label) => {
       const bucket = durationBuckets.find((item) => item.label === label);
       return bucket ? bucket.match(recipe) : true;
     });
@@ -153,8 +167,10 @@
       recipe.difficulty,
       recipe.cost,
       recipe.tips,
+      recipe.recommendReason,
       ...(recipe.mealType || []),
       ...(recipe.tags || []),
+      ...(recipe.nutritionTags || []),
       ...(recipe.mainIngredients || []),
       ...(recipe.ingredients || []),
       ...(recipe.steps || []),
@@ -198,36 +214,86 @@
     return recipe.allergens && recipe.allergens.length ? recipe.allergens.join(" / ") : "无常见过敏源";
   }
 
+  function renderRecipeCard(recipe, index, compact) {
+    const tags = [recipe.category, recipe.difficulty, `${recipe.time} 分钟`].filter(Boolean);
+    const nutrition = recipe.nutrition || {};
+    return `
+      <article class="recipe-card ${compact ? "recipe-card-compact" : ""} ${getCardTone(index)}" data-id="${recipe.id}">
+        <div class="recipe-visual" aria-hidden="true">
+          <span>${escapeHtml(recipe.emoji || recipe.name.slice(0, 1))}</span>
+        </div>
+        <div class="recipe-body">
+          <div class="recipe-topline">
+            <span>${escapeHtml(recipe.cuisine)}</span>
+            <span>${escapeHtml((recipe.mealType || []).join(" / "))}</span>
+          </div>
+          <h3>${escapeHtml(recipe.name)}</h3>
+          <p>${escapeHtml(compact ? recipe.recommendReason : recipe.description)}</p>
+          <div class="recipe-tags">
+            ${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}
+          </div>
+          <small>${escapeHtml(nutrition.caloriesKcal ? `约 ${nutrition.caloriesKcal} kcal/份 · ${getAllergenText(recipe)}` : getAllergenText(recipe))}</small>
+        </div>
+      </article>
+    `;
+  }
+
+  function pickFeaturedRecipes() {
+    const rules = [
+      (recipe) => recipe.tags.includes("快手"),
+      (recipe) => recipe.nutritionTags.includes("清淡") || recipe.tags.includes("清淡"),
+      (recipe) => recipe.nutritionTags.includes("高蛋白") || recipe.tags.includes("高蛋白")
+    ];
+    const picked = [];
+    rules.forEach((rule) => {
+      const match = recipes.find((recipe) => rule(recipe) && !picked.includes(recipe));
+      if (match) {
+        picked.push(match);
+      }
+    });
+    return picked.length === 3 ? picked : recipes.slice(0, 3);
+  }
+
+  function renderFeaturedRecipes() {
+    featuredRecipes.innerHTML = pickFeaturedRecipes()
+      .map((recipe, index) => renderRecipeCard(recipe, index + 1, true))
+      .join("");
+  }
+
   function renderRecipes() {
     const filtered = getFilteredRecipes();
+    const selectedCount = getSelectedCount();
     resultCount.textContent = filtered.length;
     activeSummary.textContent = getActiveSummary();
+    activeCountText.textContent = `已选 ${selectedCount} 项`;
+    activeCountBadge.textContent = selectedCount;
     emptyState.hidden = filtered.length !== 0;
+    recipeGrid.innerHTML = filtered.map((recipe, index) => renderRecipeCard(recipe, index, false)).join("");
+  }
 
-    recipeGrid.innerHTML = filtered
-      .map((recipe, index) => {
-        const tags = [recipe.category, recipe.difficulty, `${recipe.time} 分钟`].filter(Boolean);
-        return `
-          <article class="recipe-card ${getCardTone(index)}" data-id="${recipe.id}">
-            <div class="recipe-visual" aria-hidden="true">
-              <span>${escapeHtml(recipe.emoji || recipe.name.slice(0, 1))}</span>
-            </div>
-            <div class="recipe-body">
-              <div class="recipe-topline">
-                <span>${escapeHtml(recipe.cuisine)}</span>
-                <span>${escapeHtml((recipe.mealType || []).join(" / "))}</span>
-              </div>
-              <h3>${escapeHtml(recipe.name)}</h3>
-              <p>${escapeHtml(recipe.description)}</p>
-              <div class="recipe-tags">
-                ${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}
-              </div>
-              <small>${escapeHtml(getAllergenText(recipe))}</small>
-            </div>
-          </article>
-        `;
-      })
-      .join("");
+  function renderNutrition(recipe) {
+    const nutrition = recipe.nutrition || {};
+    const items = [
+      ["热量", nutrition.caloriesKcal, "kcal"],
+      ["蛋白质", nutrition.proteinG, "g"],
+      ["脂肪", nutrition.fatG, "g"],
+      ["碳水", nutrition.carbsG, "g"],
+      ["膳食纤维", nutrition.fiberG, "g"],
+      ["钠", nutrition.sodiumMg, "mg"]
+    ];
+    return `
+      <section class="nutrition-panel">
+        <div>
+          <h3>每份营养估算</h3>
+          <p>以下为静态估算值，仅用于日常选餐参考。</p>
+        </div>
+        <div class="nutrition-grid">
+          ${items
+            .map(([label, value, unit]) => `<span><strong>${escapeHtml(value ?? "-")}</strong>${escapeHtml(unit)}<small>${escapeHtml(label)}</small></span>`)
+            .join("")}
+        </div>
+      </section>
+    `;
   }
 
   function showRecipe(recipe) {
@@ -248,8 +314,10 @@
           <p class="eyebrow">${escapeHtml(recipe.cuisine)} · ${escapeHtml(recipe.category)}</p>
           <h2 id="dialogTitle">${escapeHtml(recipe.name)}</h2>
           <p class="dialog-summary">${escapeHtml(recipe.description)}</p>
+          <p class="dialog-reason">${escapeHtml(recipe.recommendReason)}</p>
           <div class="recipe-tags dialog-tags">
             ${meta.map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
+            ${(recipe.nutritionTags || []).map((item) => `<span>${escapeHtml(item)}</span>`).join("")}
           </div>
         </div>
       </div>
@@ -259,6 +327,7 @@
         <span>主要食材：${escapeHtml((recipe.mainIngredients || []).join(" / "))}</span>
         <span>忌口：${escapeHtml((recipe.avoidIngredients || []).join(" / ") || "无")}</span>
       </div>
+      ${renderNutrition(recipe)}
       <div class="dialog-columns">
         <section>
           <h3>食材</h3>
@@ -277,9 +346,108 @@
   function clearFilters() {
     state.keyword = "";
     keywordInput.value = "";
-    filterMeta.forEach(([key]) => state[key].clear());
+    filterKeys.forEach((key) => state[key].clear());
+    renderAll(true);
+  }
+
+  function encodeValues(values) {
+    return Array.from(values).join(",");
+  }
+
+  function loadStateFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    state.keyword = params.get("q") || "";
+    keywordInput.value = state.keyword;
+    filterMeta.forEach(([key, , queryKey]) => {
+      state[key].clear();
+      const raw = params.get(queryKey);
+      if (!raw) {
+        return;
+      }
+      raw.split(",").filter(Boolean).forEach((value) => state[key].add(value));
+    });
+  }
+
+  function syncStateToUrl() {
+    const params = new URLSearchParams();
+    if (state.keyword.trim()) {
+      params.set("q", state.keyword.trim());
+    }
+    filterMeta.forEach(([key, , queryKey]) => {
+      if (state[key].size) {
+        params.set(queryKey, encodeValues(state[key]));
+      }
+    });
+    const query = params.toString();
+    const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+    window.history.replaceState(null, "", nextUrl);
+  }
+
+  function renderAll(shouldSyncUrl) {
+    if (shouldSyncUrl) {
+      syncStateToUrl();
+    }
     renderFilters();
     renderRecipes();
+  }
+
+  function openFilters() {
+    document.body.classList.add("filters-open");
+    filterBackdrop.hidden = false;
+    filterPanel.setAttribute("aria-modal", "true");
+  }
+
+  function closeFilters() {
+    document.body.classList.remove("filters-open");
+    filterBackdrop.hidden = true;
+    filterPanel.removeAttribute("aria-modal");
+  }
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.hidden = false;
+    window.clearTimeout(showToast.timer);
+    showToast.timer = window.setTimeout(() => {
+      toast.hidden = true;
+    }, 1800);
+  }
+
+  function fallbackCopy(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
+  }
+
+  async function copyShareLink() {
+    syncStateToUrl();
+    const url = window.location.href;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        fallbackCopy(url);
+      }
+      showToast("已复制当前筛选链接");
+    } catch (error) {
+      fallbackCopy(url);
+      showToast("已复制当前筛选链接");
+    }
+  }
+
+  function showRandomRecipe() {
+    const filtered = getFilteredRecipes();
+    if (!filtered.length) {
+      showToast("当前筛选没有结果");
+      return;
+    }
+    const recipe = filtered[Math.floor(Math.random() * filtered.length)];
+    showRecipe(recipe);
   }
 
   filterGroups.addEventListener("click", (event) => {
@@ -294,38 +462,41 @@
     } else {
       state[key].add(value);
     }
-    renderFilters();
-    renderRecipes();
+    renderAll(true);
   });
 
-  recipeGrid.addEventListener("click", (event) => {
+  document.addEventListener("click", (event) => {
     const card = event.target.closest("[data-id]");
-    if (!card) {
+    if (card) {
+      const recipe = recipes.find((item) => item.id === card.dataset.id);
+      if (recipe) {
+        showRecipe(recipe);
+      }
       return;
     }
-    const recipe = recipes.find((item) => item.id === card.dataset.id);
-    if (recipe) {
-      showRecipe(recipe);
+
+    const actionButton = event.target.closest("[data-action]");
+    if (!actionButton) {
+      return;
+    }
+    if (actionButton.dataset.action === "random") {
+      showRandomRecipe();
+    }
+    if (actionButton.dataset.action === "share") {
+      copyShareLink();
     }
   });
 
   keywordInput.addEventListener("input", (event) => {
     state.keyword = event.target.value;
-    renderRecipes();
+    renderAll(true);
   });
 
   document.querySelector("#clearButton").addEventListener("click", clearFilters);
-
-  document.querySelector("#randomButton").addEventListener("click", () => {
-    const filtered = getFilteredRecipes();
-    if (!filtered.length) {
-      return;
-    }
-    const recipe = filtered[Math.floor(Math.random() * filtered.length)];
-    showRecipe(recipe);
-  });
-
   document.querySelector("#closeDialog").addEventListener("click", () => dialog.close());
+  openFiltersButton.addEventListener("click", openFilters);
+  closeFiltersButton.addEventListener("click", closeFilters);
+  filterBackdrop.addEventListener("click", closeFilters);
 
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) {
@@ -333,6 +504,12 @@
     }
   });
 
-  renderFilters();
-  renderRecipes();
+  window.addEventListener("popstate", () => {
+    loadStateFromUrl();
+    renderAll(false);
+  });
+
+  loadStateFromUrl();
+  renderFeaturedRecipes();
+  renderAll(false);
 })();

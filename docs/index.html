@@ -9,43 +9,64 @@
   <body>
     <main class="shell">
       <section class="workspace" aria-label="食世界菜谱筛选器">
-        <aside class="filters" aria-label="筛选条件">
-          <div class="brand">
-            <span class="brand-mark">食</span>
-            <div>
-              <h1>食世界</h1>
-              <p>今天吃什么，先缩小选择。</p>
+        <aside id="filterPanel" class="filters" aria-label="筛选条件">
+          <div class="filter-panel-head">
+            <div class="brand">
+              <span class="brand-mark">食</span>
+              <div>
+                <h1>食世界</h1>
+                <p>今天吃什么，先缩小选择。</p>
+              </div>
             </div>
+            <button id="closeFiltersButton" class="icon-button panel-close" type="button" aria-label="关闭筛选">x</button>
           </div>
-
-          <label class="search-box">
-            <span>关键词</span>
-            <input id="keywordInput" type="search" placeholder="搜菜名、食材、做法" autocomplete="off" />
-          </label>
 
           <div id="filterGroups" class="filter-groups"></div>
 
           <div class="filter-actions">
-            <button id="randomButton" class="primary-button" type="button">随机一道</button>
             <button id="clearButton" class="ghost-button" type="button">清空筛选</button>
           </div>
         </aside>
 
         <section class="results" aria-label="菜谱结果">
-          <header class="results-header">
-            <div>
-              <p class="eyebrow">Recipe Finder</p>
-              <h2>今天的候选菜单</h2>
+          <header class="hero">
+            <p class="eyebrow">TasteWorld v0.2</p>
+            <div class="hero-title-row">
+              <div>
+                <h2>今天吃什么？</h2>
+                <p>60 道家常与轻食菜谱，按时间、场景、忌口筛一筛。</p>
+              </div>
+              <div class="result-count">
+                <strong id="resultCount">0</strong>
+                <span>道菜</span>
+              </div>
             </div>
-            <div class="result-count">
-              <strong id="resultCount">0</strong>
-              <span>道菜</span>
+
+            <label class="search-box hero-search">
+              <span>关键词</span>
+              <input id="keywordInput" type="search" placeholder="搜菜名、食材、做法" autocomplete="off" />
+            </label>
+
+            <div class="hero-actions">
+              <button class="primary-button" type="button" data-action="random">随机一道</button>
+              <button class="ghost-button" type="button" data-action="share">复制分享链接</button>
             </div>
           </header>
 
+          <section class="featured" aria-label="今日推荐">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Daily Picks</p>
+                <h3>今日推荐</h3>
+              </div>
+              <span>快手 / 清淡 / 高蛋白</span>
+            </div>
+            <div id="featuredRecipes" class="featured-grid"></div>
+          </section>
+
           <div class="status-bar">
             <span id="activeSummary">未选择筛选条件</span>
-            <span>忌口/过敏会强制排除冲突菜谱</span>
+            <span id="activeCountText">已选 0 项</span>
           </div>
 
           <div id="recipeGrid" class="recipe-grid"></div>
@@ -56,6 +77,19 @@
         </section>
       </section>
     </main>
+
+    <div id="filterBackdrop" class="filter-backdrop" hidden></div>
+
+    <nav class="mobile-bar" aria-label="移动端操作">
+      <button id="openFiltersButton" type="button">
+        <span>筛选</span>
+        <strong id="activeCountBadge">0</strong>
+      </button>
+      <button type="button" data-action="random">随机一道</button>
+      <button type="button" data-action="share">分享链接</button>
+    </nav>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
     <dialog id="recipeDialog" class="recipe-dialog" aria-labelledby="dialogTitle">
       <button id="closeDialog" class="close-button" type="button" aria-label="关闭详情">x</button>

@@ -5,8 +5,10 @@
 ## 当前可运行版本
 
 - 静态网页入口：[docs/index.html](./docs/index.html)
-- 功能范围：30 道示例菜谱浏览、条件筛选、忌口强排除、关键词搜索、随机推荐、详情弹窗
+- 线上地址：[https://evander764.github.io/tasteworld/](https://evander764.github.io/tasteworld/)
+- 功能范围：60 道示例菜谱浏览、条件筛选、忌口强排除、关键词搜索、今日推荐、随机推荐、详情弹窗、复制分享链接
 - 数据入口：`docs/recipes.js` 中的 `window.RECIPES`
+- 每道菜包含 `recommendReason`、`nutritionTags` 和每份营养估算 `nutrition`
 - 不依赖后端、npm、Vite、微信云开发或小程序环境
 
 ## 本地运行
@@ -27,21 +29,12 @@ http://localhost:4173
 
 ## GitHub Pages 发布
 
-当前仓库还没有远程地址。首次发布可以按这个顺序做：
+当前仓库发布到 `Evander764/tasteworld`，GitHub Pages 使用 `master` 分支的 `/docs` 目录。
 
-1. 在 GitHub 创建一个新仓库。
-2. 在本地提交当前代码。
-3. 把本地仓库推送到 GitHub。
-4. 打开 GitHub 仓库的 `Settings > Pages`。
-5. `Source` 选择 `Deploy from a branch`。
-6. `Branch` 选择默认分支，例如 `master`。
-7. `Folder` 选择 `/docs`。
-8. 保存后访问 GitHub Pages 生成的地址。
-
-生成的地址通常是：
+发布地址：
 
 ```text
-https://<username>.github.io/<repo>/
+https://evander764.github.io/tasteworld/
 ```
 
 ## 旧版目录
@@ -63,6 +56,8 @@ node --check docs/recipes.js
 打开页面后建议手动验证：
 
 - 选择任意筛选条件，结果数量会变化。
-- 选择“含鸡蛋”等忌口标签后，包含该忌口的菜谱会被排除。
+- 选择“鸡蛋”等忌口标签后，包含该忌口的菜谱会被排除。
 - 点击“随机一道”会打开当前筛选结果里的某道菜。
+- 点击“复制分享链接”后，新窗口打开能恢复同样筛选条件。
 - 点击任意菜谱卡片会打开详情弹窗。
+- 手机宽度下筛选区默认隐藏，底部操作条可以打开筛选面板。
