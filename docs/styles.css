@@ -266,7 +266,8 @@ button {
 }
 
 .featured,
-.fitness-zone {
+.fitness-zone,
+.meal-planner {
   margin-top: 24px;
 }
 
@@ -330,6 +331,165 @@ button {
   align-self: end;
   color: var(--accent-strong);
   font-weight: 900;
+}
+
+.meal-planner {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, rgba(189, 86, 63, 0.1), transparent 55%),
+    #fbf4e8;
+  padding: 18px;
+}
+
+.planner-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr);
+  gap: 16px;
+}
+
+.planner-members {
+  display: grid;
+  gap: 12px;
+}
+
+.member-card {
+  display: grid;
+  grid-template-columns: 1.1fr 0.72fr 0.9fr 1.4fr;
+  gap: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 12px;
+}
+
+.member-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  grid-column: 1 / -1;
+  gap: 8px;
+}
+
+.member-card-head .icon-button {
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+}
+
+.member-card label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.member-card input,
+.member-card select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  color: var(--ink);
+  padding: 0 10px;
+}
+
+.planner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.planner-result {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-height: 260px;
+  border: 1px dashed var(--line);
+  background: rgba(255, 253, 248, 0.7);
+  padding: 14px;
+  color: var(--muted);
+}
+
+.planner-result > strong,
+.planner-summary strong,
+.planner-empty strong {
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.planner-summary,
+.planner-empty {
+  display: grid;
+  gap: 6px;
+}
+
+.planner-menu,
+.member-nutrition-list {
+  display: grid;
+  gap: 12px;
+}
+
+.planner-dish,
+.member-nutrition {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 12px;
+}
+
+.planner-dish small {
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.planner-dish p,
+.member-nutrition p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.link-button {
+  display: block;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 0;
+  text-align: left;
+  font-size: 20px;
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.planner-allocation,
+.nutrition-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.planner-allocation span,
+.nutrition-mini span {
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  padding: 7px 9px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.planner-allocation .cannot-eat {
+  border-color: rgba(189, 86, 63, 0.38);
+  background: rgba(189, 86, 63, 0.09);
+  color: var(--red);
+}
+
+.planner-allocation .can-eat {
+  border-color: rgba(47, 111, 85, 0.32);
+  background: rgba(47, 111, 85, 0.08);
+  color: var(--accent-strong);
 }
 
 .recipe-grid {
@@ -433,6 +593,13 @@ button {
 .recipe-card p {
   color: #424941;
   line-height: 1.65;
+}
+
+.recipe-card .recipe-fit {
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.45;
 }
 
 .empty-state {
@@ -734,6 +901,16 @@ button {
   .nutrition-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  .planner-layout,
+  .member-card {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .member-avoid-field,
+  .planner-result {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 760px) {
@@ -846,6 +1023,28 @@ button {
   .recipe-grid,
   .fitness-grid {
     grid-template-columns: 1fr;
+  }
+
+  .meal-planner {
+    padding: 14px;
+  }
+
+  .planner-layout,
+  .member-card {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-result {
+    grid-column: auto;
+  }
+
+  .planner-actions {
+    display: grid;
+  }
+
+  .planner-actions button,
+  .planner-dish > button {
+    width: 100%;
   }
 
   .recipe-card,

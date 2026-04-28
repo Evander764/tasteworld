@@ -2264,6 +2264,8 @@
 
   const FITNESS_GOALS = ["减脂", "增肌", "维持", "训练前", "训练后"];
   const MACRO_FOCUS = ["高蛋白", "低脂", "低油", "控碳水", "高碳水", "高纤维", "高饱腹"];
+  const NEED_SCENES = ["下班快手", "一人食", "家庭晚餐", "健身备餐", "早餐主食", "新手练手"];
+  const MEAL_ROLES = ["荤菜", "素菜", "主食", "汤", "轻食", "早餐", "高蛋白补充"];
 
   function uniqueAllowed(values, allowed, fallback) {
     const result = [];
@@ -2324,6 +2326,85 @@
     }
 
     return uniqueAllowed(focus, MACRO_FOCUS, ["高饱腹"]);
+  }
+
+  function inferNeedScenes(recipe) {
+    const text = [...(recipe.tags || []), ...(recipe.nutritionTags || []), recipe.category, ...(recipe.mealType || []), recipe.name].join(" ");
+    const scenes = [];
+
+    if (recipe.time <= 30 || text.includes("快手") || text.includes("懒人")) {
+      scenes.push("下班快手");
+    }
+    if (recipe.servings <= 1 || text.includes("一人食")) {
+      scenes.push("一人食");
+    }
+    if (recipe.servings >= 2 && (text.includes("晚餐") || text.includes("家常") || text.includes("下饭"))) {
+      scenes.push("家庭晚餐");
+    }
+    if (recipe.mealPrepFriendly || text.includes("健身") || text.includes("便当") || text.includes("减脂")) {
+      scenes.push("健身备餐");
+    }
+    if (text.includes("早餐") || text.includes("主食")) {
+      scenes.push("早餐主食");
+    }
+    if (recipe.difficulty === "简单" || text.includes("新手友好")) {
+      scenes.push("新手练手");
+    }
+
+    return uniqueAllowed(scenes, NEED_SCENES, ["家庭晚餐"]);
+  }
+
+  function inferMealRoles(recipe) {
+    const text = [recipe.category, recipe.name, ...(recipe.tags || []), ...(recipe.nutritionTags || []), ...(recipe.mainIngredients || [])].join(" ");
+    const roles = [];
+    const meatPattern = /鸡翅|鸡腿|鸡胸|鸡肉|牛肉|牛腩|猪肉|肉丝|肉末|五花肉|里脊|排骨|虾|鱼|火腿|香肠|三文鱼|金枪鱼/;
+
+    if (recipe.category === "汤类" || text.includes("汤") || text.includes("羹")) {
+      roles.push("汤");
+    }
+    if (recipe.category === "主食" || text.includes("米饭") || text.includes("面") || text.includes("饭团") || text.includes("意面") || text.includes("吐司") || text.includes("燕麦")) {
+      roles.push("主食");
+    }
+    if (recipe.category === "早餐" || (recipe.mealType || []).includes("早餐")) {
+      roles.push("早餐");
+    }
+    if (recipe.category === "轻食" || text.includes("沙拉") || text.includes("轻食")) {
+      roles.push("轻食");
+    }
+    if (recipe.category === "素菜" || text.includes("素食") || (!meatPattern.test(text) && (recipe.nutrition || {}).proteinG < 15 && text.includes("蔬菜"))) {
+      roles.push("素菜");
+    }
+    if (meatPattern.test(text)) {
+      roles.push("荤菜");
+    }
+    if ((recipe.nutrition || {}).proteinG >= 22 || text.includes("高蛋白") || text.includes("豆腐") || text.includes("鸡蛋")) {
+      roles.push("高蛋白补充");
+    }
+    if (!roles.length && (recipe.nutrition || {}).fiberG >= 4) {
+      roles.push("素菜");
+    }
+
+    return uniqueAllowed(roles, MEAL_ROLES, ["轻食"]);
+  }
+
+  function scoreEase(value) {
+    return Math.max(1, Math.min(5, value));
+  }
+
+  function inferCookability(recipe) {
+    const ingredientCount = (recipe.ingredients || []).length;
+    const toolCount = (recipe.tools || []).length;
+    const difficultyPenalty = recipe.difficulty === "稍复杂" ? 2 : recipe.difficulty === "中等" ? 1 : 0;
+    const timePenalty = recipe.time > 60 ? 2 : recipe.time > 35 ? 1 : 0;
+    const hasBeginnerGuide = Boolean(beginnerGuideById[recipe.id]);
+    const isFriendly = (recipe.tags || []).includes("新手友好") || recipe.difficulty === "简单";
+
+    return {
+      ingredientEase: scoreEase(6 - Math.ceil(ingredientCount / 3)),
+      toolEase: scoreEase(6 - toolCount),
+      skillEase: scoreEase(5 - difficultyPenalty - Math.floor((recipe.spiceLevel || 0) / 3)),
+      failureTolerance: scoreEase((hasBeginnerGuide ? 5 : isFriendly ? 4 : 3) - timePenalty)
+    };
   }
 
   function guide(prepChecklist, toolChecklist, detailedSteps, donenessCheck, commonMistakes, rescueTips) {
@@ -2507,6 +2588,9 @@
         (recipe.tools || []).some((tool) => ["电饭煲", "空气炸锅", "炖锅"].includes(tool))
     ),
     beginnerGuide: beginnerGuideById[recipe.id],
+    needScenes: uniqueAllowed(recipe.needScenes || inferNeedScenes(recipe), NEED_SCENES, ["家庭晚餐"]),
+    mealRoles: uniqueAllowed(recipe.mealRoles || inferMealRoles(recipe), MEAL_ROLES, ["轻食"]),
+    cookability: recipe.cookability || inferCookability(recipe),
     nutrition: recipe.nutrition || n(0, 0, 0, 0, 0, 0)
   }));
 })();

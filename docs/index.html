@@ -30,11 +30,11 @@
 
         <section class="results" aria-label="菜谱结果">
           <header class="hero">
-            <p class="eyebrow">TasteWorld v0.4</p>
+            <p class="eyebrow">TasteWorld v0.5</p>
             <div class="hero-title-row">
               <div>
                 <h2>今天吃什么？</h2>
-                <p>84 道家常、轻食与健身餐，按目标、营养、时间和忌口筛一筛。</p>
+                <p>84 道真实可做的菜谱，支持按目标筛菜，也能为多人忌口安排一桌饭。</p>
               </div>
               <div class="result-count">
                 <strong id="resultCount">0</strong>
@@ -93,6 +93,29 @@
                 <span>适合提前做好，第二天带饭或复热。</span>
                 <small>prep=1</small>
               </button>
+            </div>
+          </section>
+
+          <section class="meal-planner" aria-label="多人忌口配餐">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Table Planner</p>
+                <h3>多人配餐</h3>
+              </div>
+              <span>按人忌口分配，不是一刀切排除整桌菜</span>
+            </div>
+            <div class="planner-layout">
+              <div>
+                <div id="plannerMembers" class="planner-members"></div>
+                <div class="planner-actions">
+                  <button id="addMemberButton" class="ghost-button" type="button">添加成员</button>
+                  <button id="generateMealButton" class="primary-button" type="button">生成一桌菜单</button>
+                </div>
+              </div>
+              <div id="plannerResult" class="planner-result" aria-live="polite">
+                <strong>先填写一起吃饭的人</strong>
+                <span>每个人可以有不同忌口。生成后会显示谁能吃哪道菜、建议分多少、营养估算是否够。</span>
+              </div>
             </div>
           </section>
 
