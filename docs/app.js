@@ -83,7 +83,8 @@
     cut: { fitnessGoals: ["减脂"], macroFocus: ["高蛋白"], mealPrep: false },
     bulk: { fitnessGoals: ["增肌"], macroFocus: ["高碳水"], mealPrep: false },
     recovery: { fitnessGoals: ["训练后"], macroFocus: ["高蛋白"], mealPrep: false },
-    prep: { fitnessGoals: [], macroFocus: [], mealPrep: true }
+    prep: { fitnessGoals: [], macroFocus: [], mealPrep: true },
+    beginner: { fitnessGoals: [], macroFocus: [], tags: ["零基础"], mealPrep: false }
   };
 
   const filterKeys = filterMeta.map(([key]) => key);
@@ -1075,6 +1076,7 @@
     state.mealPrep = Boolean(preset.mealPrep);
     (preset.fitnessGoals || []).forEach((value) => state.fitnessGoals.add(value));
     (preset.macroFocus || []).forEach((value) => state.macroFocus.add(value));
+    (preset.tags || []).forEach((value) => state.tags.add(value));
     state.visibleCount = initialVisibleCount;
     renderAll(true);
     recipeGrid.scrollIntoView({ behavior: "smooth", block: "start" });

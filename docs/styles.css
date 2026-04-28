@@ -267,6 +267,7 @@ button {
 
 .featured,
 .fitness-zone,
+.starter-zone,
 .meal-planner {
   margin-top: 24px;
 }
@@ -331,6 +332,10 @@ button {
   align-self: end;
   color: var(--accent-strong);
   font-weight: 900;
+}
+
+.starter-zone .fitness-grid {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .meal-planner {
