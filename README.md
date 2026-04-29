@@ -8,9 +8,10 @@
 - 线上地址：[https://evander764.github.io/tasteworld/](https://evander764.github.io/tasteworld/)
 - 功能范围：116 道示例菜谱浏览、默认展示部分菜品并可展开更多、条件筛选、健身餐专题、零基础入门专题、多人忌口配餐、忌口强排除、关键词搜索、今日推荐、随机推荐、详情弹窗、复制分享链接
 - 数据入口：`docs/recipes.js` 中的 `window.RECIPES`
+- 核心逻辑：`docs/core.js` 中的 `window.TasteworldCore`，浏览器直接使用，同时支持 Node 测试导入
 - 每道菜包含 `recommendReason`、`nutritionTags`、`fitnessGoals`、`macroFocus`、`mealPrepFriendly`、`needScenes`、`mealRoles`、`cookability` 和每份营养估算 `nutrition`
 - 22 道高频/零基础菜包含 `beginnerGuide`，详情页可展开“新手模式”查看火候、时间、状态判断和失败补救
-- 不依赖后端、npm、Vite、微信云开发或小程序环境
+- 运行时不依赖后端、npm、Vite、微信云开发或小程序环境
 
 ## 本地运行
 
@@ -38,6 +39,13 @@ http://localhost:4173
 https://evander764.github.io/tasteworld/
 ```
 
+## 当前架构
+
+- `docs/index.html`: 页面结构和脚本入口，按 `core.js`、`recipes.js`、`app.js` 的顺序加载。
+- `docs/core.js`: 纯业务逻辑，包括筛选、忌口判断、配餐评分、营养估算、URL 成员编解码和菜谱数据校验。
+- `docs/app.js`: 浏览器 UI 层，包括 DOM 查询、事件监听、渲染、弹窗、URL 同步和移动端筛选面板。
+- `docs/recipes.js`: 静态菜谱数据，继续使用全局 `window.RECIPES`，以保持直接双击打开能力。
+
 ## 旧版目录
 
 这些目录保留作为后续扩展参考，静态网页第一版不会依赖它们：
@@ -50,8 +58,17 @@ https://evander764.github.io/tasteworld/
 ## 验证
 
 ```powershell
-node --check docs/app.js
+npm run check
+npm test
+npm run verify
+```
+
+也可以单独执行语法检查：
+
+```powershell
+node --check docs/core.js
 node --check docs/recipes.js
+node --check docs/app.js
 ```
 
 打开页面后建议手动验证：
