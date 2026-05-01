@@ -294,12 +294,22 @@ button {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.starter-grid,
 .fitness-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
+.starter-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fitness-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.starter-card,
 .fitness-card {
   display: grid;
   gap: 10px;
@@ -314,28 +324,82 @@ button {
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
+.starter-card {
+  min-height: 168px;
+  background:
+    linear-gradient(135deg, rgba(189, 86, 63, 0.16), transparent 54%),
+    #fff8ea;
+}
+
+.starter-card.is-active {
+  border-color: var(--accent-strong);
+  box-shadow: inset 0 0 0 2px var(--accent-strong), 0 12px 30px rgba(189, 86, 63, 0.16);
+}
+
+.starter-card:hover,
 .fitness-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 28px rgba(32, 36, 31, 0.13);
 }
 
+.starter-card strong,
 .fitness-card strong {
   font-size: 20px;
 }
 
+.starter-card span,
 .fitness-card span {
   color: #424941;
   line-height: 1.55;
 }
 
+.starter-card small,
 .fitness-card small {
   align-self: end;
   color: var(--accent-strong);
   font-weight: 900;
 }
 
-.starter-zone .fitness-grid {
-  grid-template-columns: minmax(0, 1fr);
+.zone-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.zone-summary::-webkit-details-marker {
+  display: none;
+}
+
+.zone-summary span {
+  display: grid;
+  gap: 4px;
+}
+
+.zone-summary strong {
+  font-size: 28px;
+}
+
+.zone-summary em {
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.zone-summary::after {
+  content: "展开";
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 8px 12px;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+details[open] > .zone-summary::after {
+  content: "收起";
 }
 
 .meal-planner {
@@ -350,6 +414,7 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1.05fr);
   gap: 16px;
+  margin-top: 16px;
 }
 
 .planner-members {
@@ -899,6 +964,7 @@ button {
 
   .featured-grid,
   .recipe-grid,
+  .starter-grid,
   .fitness-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1026,8 +1092,27 @@ button {
 
   .featured-grid,
   .recipe-grid,
+  .starter-grid,
   .fitness-grid {
     grid-template-columns: 1fr;
+  }
+
+  .starter-card,
+  .fitness-card {
+    min-height: 132px;
+  }
+
+  .zone-summary {
+    align-items: flex-start;
+    display: grid;
+  }
+
+  .zone-summary strong {
+    font-size: 24px;
+  }
+
+  .zone-summary::after {
+    justify-self: start;
   }
 
   .meal-planner {

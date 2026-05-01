@@ -75,6 +75,27 @@ test("fitness and beginner presets map to expected recipe sets", () => {
   assert.ok(beginnerRecipes.some((recipe) => recipe.id === "blanched-greens"));
 });
 
+test("starter presets filter and rank beginner-friendly recipe paths", () => {
+  const zeroState = Core.createInitialFilterState();
+  zeroState.starter = "zero";
+  const zeroRecipes = Core.getFilteredRecipes(recipes, zeroState);
+  assert.ok(zeroRecipes.length > 0);
+  assert.ok(zeroRecipes.every((recipe) => recipe.tags.includes("零基础")));
+  assert.equal(zeroRecipes[0].id, "fried-egg");
+
+  const quickState = Core.createInitialFilterState();
+  quickState.starter = "quick";
+  const quickRecipes = Core.getFilteredRecipes(recipes, quickState);
+  assert.ok(quickRecipes.length > 0);
+  assert.ok(quickRecipes.every((recipe) => recipe.time <= 10));
+
+  const guideState = Core.createInitialFilterState();
+  guideState.starter = "guide";
+  const guideRecipes = Core.getFilteredRecipes(recipes, guideState);
+  assert.ok(guideRecipes.length > 0);
+  assert.ok(guideRecipes.every((recipe) => recipe.beginnerGuide));
+});
+
 test("default planner generates a non-duplicated successful menu", () => {
   const members = Core.createDefaultPlannerState().members;
   const result = Core.generateMenuItems(recipes, members);

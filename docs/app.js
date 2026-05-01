@@ -27,6 +27,7 @@
   const toast = document.querySelector("#toast");
   const plannerMembers = document.querySelector("#plannerMembers");
   const plannerResult = document.querySelector("#plannerResult");
+  const plannerDisclosure = document.querySelector("#plannerDisclosure");
   const addMemberButton = document.querySelector("#addMemberButton");
   const generateMealButton = document.querySelector("#generateMealButton");
 
@@ -35,6 +36,7 @@
   const filterMeta = Core.filterMeta;
   const filterKeys = Core.filterKeys;
   const fitnessPresets = Core.fitnessPresets;
+  const starterPresets = Core.starterPresets;
   const splitAvoidText = Core.splitAvoidText;
   const formatAvoids = Core.formatAvoids;
   const getCookabilityText = Core.getCookabilityText;
@@ -54,6 +56,7 @@
   const generateMenuItems = () => Core.generateMenuItems(recipes, plannerState.members);
   const scoreRecipeForSlot = (recipe, slot, selectedIds) => Core.scoreRecipeForSlot(recipe, slot, selectedIds, plannerState.members);
   const encodePlannerMembers = () => Core.encodePlannerMembers(plannerState.members);
+  const isDefaultPlannerMembers = () => Core.isDefaultPlannerMembers(plannerState.members);
 
   function escapeHtml(value) {
     return String(value)
@@ -82,6 +85,13 @@
         `;
       })
       .join("");
+  }
+
+  function renderStarterCards() {
+    const buttons = typeof document.querySelectorAll === "function" ? document.querySelectorAll("[data-starter-preset]") : [];
+    buttons.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.starterPreset === state.starter);
+    });
   }
 
   function getCardTone(index) {
@@ -440,6 +450,7 @@
     keywordInput.value = "";
     filterKeys.forEach((key) => state[key].clear());
     state.mealPrep = false;
+    state.starter = "";
     state.visibleCount = initialVisibleCount;
     renderAll(true);
   }
@@ -457,12 +468,16 @@
       raw.split(",").filter(Boolean).forEach((value) => state[key].add(value));
     });
     state.mealPrep = params.get("prep") === "1";
+    state.starter = starterPresets[params.get("starter")] ? params.get("starter") : "";
     state.visibleCount = initialVisibleCount;
     const members = decodePlannerMembers(params.get("party"));
     if (members) {
       plannerState.members = members;
     }
     plannerState.menuIds = (params.get("menu") || "").split(",").filter(Boolean);
+    if (plannerDisclosure && (params.has("party") || plannerState.menuIds.length)) {
+      plannerDisclosure.open = true;
+    }
   }
 
   function syncStateToUrl() {
@@ -478,7 +493,10 @@
     if (state.mealPrep) {
       params.set("prep", "1");
     }
-    if (plannerState.members.length) {
+    if (state.starter) {
+      params.set("starter", state.starter);
+    }
+    if (plannerState.members.length && (!isDefaultPlannerMembers() || plannerState.menuIds.length)) {
       params.set("party", encodePlannerMembers());
     }
     if (plannerState.menuIds.length) {
@@ -493,6 +511,7 @@
     if (shouldSyncUrl) {
       syncStateToUrl();
     }
+    renderStarterCards();
     renderFilters();
     renderRecipes();
   }
@@ -566,9 +585,24 @@
     keywordInput.value = "";
     filterKeys.forEach((key) => state[key].clear());
     state.mealPrep = Boolean(preset.mealPrep);
+    state.starter = "";
     (preset.fitnessGoals || []).forEach((value) => state.fitnessGoals.add(value));
     (preset.macroFocus || []).forEach((value) => state.macroFocus.add(value));
     (preset.tags || []).forEach((value) => state.tags.add(value));
+    state.visibleCount = initialVisibleCount;
+    renderAll(true);
+    recipeGrid.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function applyStarterPreset(name) {
+    if (!starterPresets[name]) {
+      return;
+    }
+    state.keyword = "";
+    keywordInput.value = "";
+    filterKeys.forEach((key) => state[key].clear());
+    state.mealPrep = false;
+    state.starter = state.starter === name ? "" : name;
     state.visibleCount = initialVisibleCount;
     renderAll(true);
     recipeGrid.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -660,6 +694,12 @@
       if (recipe) {
         showRecipe(recipe);
       }
+      return;
+    }
+
+    const starterButton = event.target.closest("[data-starter-preset]");
+    if (starterButton) {
+      applyStarterPreset(starterButton.dataset.starterPreset);
       return;
     }
 

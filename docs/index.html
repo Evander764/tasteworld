@@ -30,11 +30,11 @@
 
         <section class="results" aria-label="菜谱结果">
           <header class="hero">
-            <p class="eyebrow">TasteWorld v0.6</p>
+            <p class="eyebrow">TasteWorld v0.7</p>
             <div class="hero-title-row">
               <div>
                 <h2>今天吃什么？</h2>
-                <p>116 道真实可做的菜谱，支持零基础入门、分类筛菜，也能为多人忌口安排一桌饭。</p>
+                <p>116 道真实可做的菜谱。先从零基础、快手或新手步骤入口开始，再慢慢展开更多选择。</p>
               </div>
               <div class="result-count">
                 <strong id="resultCount">0</strong>
@@ -53,6 +53,33 @@
             </div>
           </header>
 
+          <section class="starter-zone" aria-label="零基础入门专题">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Starter Paths</p>
+                <h3>不会做饭，先从这里选</h3>
+              </div>
+              <span>低失败率 / 少工具 / 有补救</span>
+            </div>
+            <div class="starter-grid">
+              <button class="starter-card" type="button" data-starter-preset="zero">
+                <strong>完全不会做饭</strong>
+                <span>从煮鸡蛋、水煮玉米、白灼青菜这类低失败率菜开始。</span>
+                <small>优先：零基础 / 简单 / 可补救</small>
+              </button>
+              <button class="starter-card" type="button" data-starter-preset="quick">
+                <strong>10 分钟先吃上</strong>
+                <span>适合赶时间、一个人、只想先解决一餐的场景。</span>
+                <small>优先：10 分钟内 / 快手 / 少工具</small>
+              </button>
+              <button class="starter-card" type="button" data-starter-preset="guide">
+                <strong>按新手步骤做</strong>
+                <span>只看有详细火候、时间、状态判断和失败补救的菜。</span>
+                <small>优先：有新手模式</small>
+              </button>
+            </div>
+          </section>
+
           <section class="featured" aria-label="今日推荐">
             <div class="section-head">
               <div>
@@ -65,13 +92,14 @@
           </section>
 
           <section class="fitness-zone" aria-label="健身餐专题">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Fitness Meals</p>
-                <h3>健身餐专题</h3>
-              </div>
-              <span>减脂 / 增肌 / 训练后 / 备餐</span>
-            </div>
+            <details>
+              <summary class="zone-summary">
+                <span>
+                  <small class="eyebrow">Fitness Meals</small>
+                  <strong>健身餐专题</strong>
+                </span>
+                <em>减脂 / 增肌 / 训练后 / 备餐</em>
+              </summary>
             <div class="fitness-grid">
               <button class="fitness-card" type="button" data-fitness-preset="cut">
                 <strong>减脂高蛋白</strong>
@@ -94,46 +122,32 @@
                 <small>prep=1</small>
               </button>
             </div>
-          </section>
-
-          <section class="starter-zone" aria-label="零基础入门专题">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Starter Meals</p>
-                <h3>零基础入门</h3>
-              </div>
-              <span>新手友好 / 懒人 / 低成本</span>
-            </div>
-            <div class="fitness-grid">
-              <button class="fitness-card" type="button" data-fitness-preset="beginner">
-                <strong>完全不会做饭也能开始</strong>
-                <span>从煮鸡蛋、煎鸡蛋、水煮玉米这类低失败率菜开始。</span>
-                <small>tag=零基础</small>
-              </button>
-            </div>
+            </details>
           </section>
 
           <section class="meal-planner" aria-label="多人忌口配餐">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Table Planner</p>
-                <h3>多人配餐</h3>
-              </div>
-              <span>按人忌口分配，不是一刀切排除整桌菜</span>
-            </div>
-            <div class="planner-layout">
-              <div>
-                <div id="plannerMembers" class="planner-members"></div>
-                <div class="planner-actions">
-                  <button id="addMemberButton" class="ghost-button" type="button">添加成员</button>
-                  <button id="generateMealButton" class="primary-button" type="button">生成一桌菜单</button>
+            <details id="plannerDisclosure">
+              <summary class="zone-summary">
+                <span>
+                  <small class="eyebrow">Table Planner</small>
+                  <strong>多人配餐</strong>
+                </span>
+                <em>按人忌口分配一桌菜</em>
+              </summary>
+              <div class="planner-layout">
+                <div>
+                  <div id="plannerMembers" class="planner-members"></div>
+                  <div class="planner-actions">
+                    <button id="addMemberButton" class="ghost-button" type="button">添加成员</button>
+                    <button id="generateMealButton" class="primary-button" type="button">生成一桌菜单</button>
+                  </div>
+                </div>
+                <div id="plannerResult" class="planner-result" aria-live="polite">
+                  <strong>先填写一起吃饭的人</strong>
+                  <span>每个人可以有不同忌口。生成后会显示谁能吃哪道菜、建议分多少、营养估算是否够。</span>
                 </div>
               </div>
-              <div id="plannerResult" class="planner-result" aria-live="polite">
-                <strong>先填写一起吃饭的人</strong>
-                <span>每个人可以有不同忌口。生成后会显示谁能吃哪道菜、建议分多少、营养估算是否够。</span>
-              </div>
-            </div>
+            </details>
           </section>
 
           <div class="status-bar">

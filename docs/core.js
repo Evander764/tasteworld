@@ -48,6 +48,24 @@
     beginner: { fitnessGoals: [], macroFocus: [], tags: ["零基础"], mealPrep: false }
   };
 
+  const starterPresets = {
+    zero: {
+      label: "完全不会做饭",
+      summary: "零基础入门",
+      match: (recipe) => (recipe.tags || []).includes("零基础")
+    },
+    quick: {
+      label: "10 分钟先吃上",
+      summary: "10 分钟内",
+      match: (recipe) => recipe.time <= 10
+    },
+    guide: {
+      label: "按新手步骤做",
+      summary: "有新手模式",
+      match: (recipe) => Boolean(recipe.beginnerGuide)
+    }
+  };
+
   const filterKeys = filterMeta.map(([key]) => key);
 
   const requiredRecipeFields = [
@@ -87,6 +105,7 @@
       macroFocus: new Set(),
       allergens: new Set(),
       mealPrep: false,
+      starter: "",
       visibleCount: initialVisibleCount
     };
   }
@@ -167,7 +186,8 @@
     const score = getAverageCookability(recipe).toFixed(1);
     const tools = (recipe.tools || []).slice(0, 2).join(" / ") || "常见工具";
     const recovery = (recipe.cookability || {}).failureTolerance >= 4 ? "失败可补救" : "按步骤更稳";
-    return `${recipe.time} 分钟 · ${tools} · 可做度 ${score}/5 · ${recovery}`;
+    const guide = recipe.beginnerGuide ? " · 有新手模式" : "";
+    return `${recipe.time} 分钟 · ${tools} · ${recipe.difficulty} · 可做度 ${score}/5 · ${recovery}${guide}`;
   }
 
   function addNutrition(target, nutrition, multiplier) {
@@ -198,7 +218,7 @@
   }
 
   function getSelectedCount(state) {
-    return filterKeys.reduce((total, key) => total + state[key].size, 0) + (state.mealPrep ? 1 : 0);
+    return filterKeys.reduce((total, key) => total + state[key].size, 0) + (state.mealPrep ? 1 : 0) + (state.starter ? 1 : 0);
   }
 
   function matchesScalar(state, recipe, key) {
@@ -265,9 +285,61 @@
       .includes(keyword);
   }
 
+  function matchesStarter(state, recipe) {
+    if (!state.starter) {
+      return true;
+    }
+    const preset = starterPresets[state.starter];
+    return preset ? preset.match(recipe) : true;
+  }
+
+  function getStarterScore(state, recipe) {
+    const tags = recipe.tags || [];
+    const cookability = recipe.cookability || {};
+    let score = 0;
+
+    if (state.starter === "zero") {
+      score += tags.includes("零基础") ? 45 : 0;
+      score += tags.includes("新手友好") ? 18 : 0;
+      score += tags.includes("懒人") ? 12 : 0;
+      score += recipe.beginnerGuide ? 16 : 0;
+    }
+
+    if (state.starter === "quick") {
+      score += recipe.time <= 10 ? 42 : 0;
+      score += recipe.time <= 6 ? 8 : 0;
+      score += tags.includes("快手") ? 14 : 0;
+      score += tags.includes("懒人") ? 10 : 0;
+    }
+
+    if (state.starter === "guide") {
+      score += recipe.beginnerGuide ? 50 : 0;
+      score += tags.includes("新手友好") ? 10 : 0;
+    }
+
+    score += recipe.difficulty === "简单" ? 16 : 0;
+    score += Number(cookability.skillEase || 0) * 5;
+    score += Number(cookability.failureTolerance || 0) * 4;
+    score += Number(cookability.toolEase || 0) * 3;
+    score += Number(cookability.ingredientEase || 0) * 2;
+    score -= Number(recipe.time || 0) * 0.45;
+    return score;
+  }
+
+  function sortFilteredRecipes(state, items) {
+    if (!state.starter) {
+      return items;
+    }
+    return items
+      .map((recipe, index) => ({ recipe, index, score: getStarterScore(state, recipe) }))
+      .sort((a, b) => b.score - a.score || a.recipe.time - b.recipe.time || a.index - b.index)
+      .map((item) => item.recipe);
+  }
+
   function getFilteredRecipes(recipes, state) {
-    return recipes
+    const filtered = recipes
       .filter((recipe) => !hasBlockedAllergen(state, recipe))
+      .filter((recipe) => matchesStarter(state, recipe))
       .filter((recipe) => matchesScalar(state, recipe, "category"))
       .filter((recipe) => matchesScalar(state, recipe, "cuisine"))
       .filter((recipe) => matchesArray(state, recipe, "mealType"))
@@ -278,6 +350,7 @@
       .filter((recipe) => matchesArray(state, recipe, "macroFocus"))
       .filter((recipe) => !state.mealPrep || recipe.mealPrepFriendly)
       .filter((recipe) => matchesKeyword(state, recipe));
+    return sortFilteredRecipes(state, filtered);
   }
 
   function getActiveSummary(state) {
@@ -289,6 +362,9 @@
     });
     if (state.keyword.trim()) {
       active.unshift(`关键词: ${state.keyword.trim()}`);
+    }
+    if (state.starter && starterPresets[state.starter]) {
+      active.unshift(`新手入口: ${starterPresets[state.starter].summary}`);
     }
     if (state.mealPrep) {
       active.push("备餐: 只看适合备餐");
@@ -559,6 +635,16 @@
     return encodeURIComponent(JSON.stringify(payload));
   }
 
+  function isDefaultPlannerMembers(members) {
+    if (!Array.isArray(members) || members.length !== 2) {
+      return false;
+    }
+    return members.every((member, index) => {
+      const defaultName = index === 0 ? "我" : "家人";
+      return member.name === defaultName && member.appetite === "正常" && member.goal === "普通吃饭" && !(member.avoids || []).length;
+    });
+  }
+
   function decodePlannerMembers(raw) {
     if (!raw) {
       return null;
@@ -640,6 +726,7 @@
     filterMeta,
     filterKeys,
     fitnessPresets,
+    starterPresets,
     requiredRecipeFields,
     createInitialFilterState,
     createDefaultPlannerState,
@@ -662,6 +749,9 @@
     matchesDuration,
     hasBlockedAllergen,
     matchesKeyword,
+    matchesStarter,
+    getStarterScore,
+    sortFilteredRecipes,
     getFilteredRecipes,
     getActiveSummary,
     getAllergenText,
@@ -684,6 +774,7 @@
     replaceMenuRecipe,
     encodeValues,
     encodePlannerMembers,
+    isDefaultPlannerMembers,
     decodePlannerMembers,
     validateRecipes
   };
