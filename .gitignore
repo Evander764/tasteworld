@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+Thumbs.db
+miniprogram/node_modules/
+admin-web/node_modules/
+admin-web/dist/
+miniprogram/project.private.config.json

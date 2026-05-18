@@ -4,6 +4,7 @@
 
 ## 当前可运行版本
 
+- 当前版本：TasteWorld v0.7
 - 静态网页入口：[docs/index.html](./docs/index.html)
 - 线上地址：[https://evander764.github.io/tasteworld/](https://evander764.github.io/tasteworld/)
 - 功能范围：116 道示例菜谱浏览、默认展示部分菜品并可展开更多、零基础任务入口、条件筛选、健身餐专题、多人忌口配餐、忌口强排除、关键词搜索、今日推荐、随机推荐、详情弹窗、复制分享链接
@@ -46,14 +47,9 @@ https://evander764.github.io/tasteworld/
 - `docs/app.js`: 浏览器 UI 层，包括 DOM 查询、事件监听、渲染、弹窗、URL 同步和移动端筛选面板。
 - `docs/recipes.js`: 静态菜谱数据，继续使用全局 `window.RECIPES`，以保持直接双击打开能力。
 
-## 旧版目录
+## 非当前交付范围
 
-这些目录保留作为后续扩展参考，静态网页第一版不会依赖它们：
-
-- `miniprogram/`: 微信小程序原型
-- `admin-web/`: React 后台原型
-- `cloudfunctions/`: 云函数接口原型
-- `shared/`: 早期共享数据和服务原型
+当前 GitHub Pages 交付只依赖已跟踪的 `docs/`、`test/`、`package.json` 和本文档。小程序、后台、云函数等早期原型如果存在于本地工作区，只作为历史参考，不属于当前静态站发布内容。
 
 ## 验证
 
@@ -61,6 +57,12 @@ https://evander764.github.io/tasteworld/
 npm run check
 npm test
 npm run verify
+```
+
+如果 PowerShell 执行策略拦截 `npm.ps1`，使用：
+
+```powershell
+npm.cmd run verify
 ```
 
 也可以单独执行语法检查：
